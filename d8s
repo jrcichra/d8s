@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Created by jrcichra - 05-17-2020
+
+if [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "" ];then
+    echo "
+	### Welcome to d8s - an easy way to deploy development environments on Kubernetes ###
+	   help                  this screen
+	   install [devbox]      install this devbox into kubernetes    
+	   uninstall [devbox]    uninstall this devbox from kubernetes    
+	   list 		 list all the installed devboxes
+"
+    exit 0
+fi
+
+if [ "$2" == "" ] && [ "$1" != "list" ];then
+   echo "Missing argument for $1"
+   exit 1 
+fi
+
+
+MO="lib/mo"
+
+# Make sure mo is in the current directory
+if [ ! -f "${MO}" ];then
+        echo "Could not find mo in the current directory. Downloading..."
+        curl -sSL https://git.io/get-mo -o "${MO}"
+        chmod +x "${MO}"
+fi
+
+if [ "$1" == "install" ] || [ "$1" == "uninstall" ];then
+	# source the devbox config file they specified
+	source "$2"
+	# Run through mo
+	DEPLOY=$(cat yaml/deploy.yaml | "${MO}")
+fi
+	
+# Run that yaml into kubectl apply
+if [ "$1" == "install" ];then
+	#echo "Going to send this to k8s:"
+	#echo "${DEPLOY}"
+        # Make sure the namespace exists
+        kubectl create namespace ${K8S_NAMESPACE} || true
+        echo "${DEPLOY}" | kubectl apply -f -
+elif [ "$1" == "uninstall" ];then
+        echo "${DEPLOY}" | kubectl delete -f -
+        # Delete the namespace
+        kubectl delete namespace ${K8S_NAMESPACE} || true
+elif [ "$1" == "list" ];then
+	echo -e "\n##### Deployments #####\n"
+	kubectl get deployments --selector=d8s=true -A -o wide
+	echo -e "\n##### Services ########\n"
+	kubectl get svc --selector=d8s=true -A -o wide
+else
+        echo "Something is wrong with the makefile - unexpected command"
+fi
+
+

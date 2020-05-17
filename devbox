@@ -1,0 +1,8 @@
+#!/bin/bash
+export K8S_NAME=devbox
+export K8S_NAMESPACE=sample-devbox
+export K8S_STORAGE_CLASS=standard
+export K8S_STORAGE=3Gi
+export K8S_IMAGE=jrcichra/justin-devbox:v2
+export K8S_MOUNT=/home/developer
+export K8S_SERVICE_TYPE=LoadBalancer

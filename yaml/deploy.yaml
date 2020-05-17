@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{K8S_NAME}}-storage
+  namespace: {{K8S_NAMESPACE}}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{K8S_STORAGE_CLASS}}
+  resources:
+    requests:
+      storage: {{K8S_STORAGE}}
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{K8S_NAME}}
+  namespace: {{K8S_NAMESPACE}}
+  labels:
+    app: {{K8S_NAME}}
+    d8s: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{K8S_NAME}}
+  template:
+    metadata:
+      labels:
+        app: {{K8S_NAME}}
+        d8s: "true"
+    spec:
+      containers:
+        - name: {{K8S_NAME}}
+          image: {{K8S_IMAGE}}
+          command: ["/usr/sbin/sshd", "-D"]
+          volumeMounts:
+            - name: {{K8S_NAME}}-storage
+              mountPath: {{K8S_MOUNT}}
+      volumes:
+      - name: {{K8S_NAME}}-storage
+        persistentVolumeClaim:
+          claimName: {{K8S_NAME}}-storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{K8S_NAME}}-ssh
+  namespace: {{K8S_NAMESPACE}}
+  labels:
+    d8s: "true"
+spec:
+  selector:
+    app: {{K8S_NAME}}
+    d8s: "true"
+  ports:
+    - protocol: TCP
+      port: 22
+      targetPort: 22
+  type: {{K8S_SERVICE_TYPE}}
