@@ -1,4 +1,4 @@
-FROM debian:10
+FROM debian:13
 ### GETTING SSH IN THE CONTAINER - DO NOT MODIFY
 RUN apt-get update
 RUN apt-get install -y openssh-server && \
